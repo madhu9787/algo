@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz - Algo Arena</title>
+    <link href="https://fonts.googleapis.com/css2?family=Creepster&display=swap" rel="stylesheet">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background: url('eas.jpg') no-repeat center center/cover;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+        #level-text {
+            font-size: 80px;
+            font-weight: bold;
+            color: rgb(208, 223, 204);
+            text-shadow: 4px 4px 10px rgb(1, 42, 0);
+            font-family: 'Creepster', cursive;
+            position: absolute;
+            top: 5%;
+        }
+        #quiz-container {
+            background: rgba(255, 255, 255, 0.3);
+            backdrop-filter: blur(10px);
+            padding: 50px;
+            border-radius: 15px;
+            box-shadow: 0px 0px 15px gray;
+            width: 60%;
+            position: relative;
+            font-size: 28px;
+        }
+        #question {
+            font-size: 32px;
+            font-weight: bold;
+            margin-bottom: 25px;
+        }
+        #options button {
+            display: block;
+            margin: 15px auto;
+            padding: 20px;
+            width: 90%;
+            font-size: 24px;
+            background-color: #f0f0f0;
+            border: 1px solid #ccc;
+            cursor: pointer;
+            border-radius: 10px;
+            transition: background 0.3s ease-in-out;
+        }
+        #options button.selected {
+            background-color: lightgreen;
+        }
+        #button-container {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+        #next-btn, #clue-btn, #submit-btn, #previous-btn {
+            font-size: 24px;
+            padding: 15px 30px;
+            border-radius: 12px;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        #next-btn {
+            background-color: blue;
+        }
+        #previous-btn {
+            background-color: purple;
+        }
+        #clue-btn {
+            background-color: orange;
+        }
+        #submit-btn {
+            background-color: red;
+        }
+        #timer {
+            font-size: 36px;
+            font-weight: bold;
+            color: white;
+            position: absolute;
+            top: 10%;
+            right: 10%;
+        }
+        #final-results {
+            display: none;
+            font-size: 26px;
+            font-weight: bold;
+            color: white;
+            background: black;
+            padding: 30px;
+            width: 100%;
+            height: 100vh;
+            position: absolute;
+            top: 0;
+            left: 0;
+            overflow-y: auto;
+        }
+        #final-results h2 {
+            color: yellow;
+        }
+        #final-results p {
+            color: lightblue;
+        }
+        .correct {
+            color: green;
+        }
+        .wrong {
+            color: red;
+        }
+        #score {
+            font-size: 24px;
+            font-weight: bold;
+            color: white;
+            margin-bottom: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div id="level-text">Level 1</div>
+    <div id="timer">Time: 30:00</div>
+    <div id="quiz-container">
+        <p id="question">Loading question...</p>
+        <div id="options"></div>
+        <p id="clue-text" style="display: none; font-size: 22px; color: darkblue; font-style: italic;"></p>
+        <div id="button-container">
+            <button id="previous-btn">Previous</button>
+            <button id="clue-btn">Show Clue (2 free tries)</button>
+            <button id="next-btn">Next</button>
+            <button id="submit-btn" style="display: none;">Submit</button>
+        </div>
+    </div>
+    <div id="final-results">
+        <h2>Quiz Complete!</h2>
+        <p>Your total score: <span id="total-score"></span></p>
+        <div id="wrong-answers"></div>
+    </div>
+    <script type="module">
+        // Import Firebase modules
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
+import { getDatabase, ref, set, get, update } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-database.js";
+
+// Firebase configuration
+const firebaseConfig = {
+    apiKey: "AIzaSyCyZkJJnt4jhQs_OO-GT5lxXixCvOJSY_Q",
+    authDomain: "algoarena-85844.firebaseapp.com",
+    databaseURL: "https://algoarena-85844-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "algoarena-85844",
+    storageBucket: "algoarena-85844.firebasestorage.app",
+    messagingSenderId: "346189897124",
+    appId: "1:346189897124:web:2cdf7056e42d63401bf531"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const database = getDatabase(app);
+
+// Function to store the score in Firebase
+function storeScore(score) {
+    let username = localStorage.getItem("username");
+    if (username) {
+        const userRef = ref(database, 'users/' + username);
+        get(userRef).then((snapshot) => {
+            if (snapshot.exists()) {
+                let currentScore = snapshot.val().score || 0;
+                update(userRef, { score: currentScore + score })
+                    .then(() => console.log("Score updated successfully"))
+                    .catch((error) => console.error("Error updating score:", error));
+            } else {
+                set(userRef, { name: username, score: score })
+                    .then(() => console.log("Score saved successfully"))
+                    .catch((error) => console.error("Error saving score:", error));
+            }
+        }).catch((error) => console.error("Error retrieving user data:", error));
+    } else {
+        alert("User not logged in!");
+    }
+}
+
+// Call `storeScore()` when the quiz is completed
+document.getElementById("submit-btn").addEventListener("click", function() {
+    let finalScore = calculateFinalScore(); // Replace with actual score calculation
+    storeScore(finalScore);
+});
+
+        let questions = [
+        {
+question: "What happens if you assign a decimal value to an int variable in Java without typecasting?",
+options: ["Compilation error", "The decimal part is removed", "The value is rounded", "It runs without error"],
+answer: "Compilation error",
+clue: "Java does not allow implicit conversion from floating-point to integer types."
+},
+{
+question: "What type of memory does the CPU use to store frequently accessed data?",
+options: ["ROM", "Hard Disk", "Cache Memory", "USB Storage"],
+answer: "Cache Memory",
+clue: "This memory is small but extremely fast and sits between the CPU and RAM."
+},
+{
+question: "In C, which data type is used to store a single character?",
+options: ["char", "string", "Character", "byte"],
+answer: "char",
+clue: "This data type requires single quotes when storing values."
+},
+{
+question: "What is the difference between float and double in C and Java?",
+options: ["float has more precision", "double has more precision", "Both have the same precision", "double is only available in Java"],
+answer: "double has more precision",
+clue: "One of these data types takes up more memory and is used for higher precision."
+},
+{
+question: "What is the format specifier for printing a float value in C?",
+options: ["%d", "%c", "%f", "%s"],
+answer: "%f",
+clue: "This specifier is used for decimal numbers in printf()."
+},
+{
+question: "Which memory unit is the fastest?",
+options: ["Hard Disk", "RAM", "Cache Memory", "SSD"],
+answer: "Cache Memory",
+clue: "This memory is built into the CPU for fast data access."
+},
+{
+question: "In Java, which keyword is used to declare a constant variable?",
+options: ["const", "final", "static", "readonly"],
+answer: "final",
+clue: "Once assigned, the value of this variable cannot be changed."
+},
+{
+question: "What happens when an integer overflows in Java?",
+options: ["It wraps around to the negative value", "It causes a runtime error", "It throws an exception", "The program stops execution"],
+answer: "It wraps around to the negative value",
+clue: "Java follows the two’s complement representation for integers."
+},
+{
+question: "What is the correct way to declare a variable in C?",
+options: ["int x;", "int x = 10;", "Both a and b", "None of the above"],
+answer: "Both a and b",
+clue: "C requires variables to be declared before use, and they can optionally be initialized."
+}
+ ];
+
+        let currentQuestionIndex = 0;
+    let score = 0;
+    let selectedAnswers = {};
+    let clueTries = 2;
+    let timeLeft = 30 * 60; 
+    let timerInterval;
+
+    function updateScore() {
+        document.getElementById("score").innerText = "Score: " + score;
+    }
+
+    function loadQuestion() {
+        let q = questions[currentQuestionIndex];
+        document.getElementById("question").innerText = q.question;
+        let optionsDiv = document.getElementById("options");
+        optionsDiv.innerHTML = "";
+        q.options.forEach(option => {
+            let btn = document.createElement("button");
+            btn.innerText = option;
+            btn.onclick = () => selectAnswer(btn, option);
+            optionsDiv.appendChild(btn);
+        });
+        document.getElementById("clue-text").style.display = "none";
+        document.getElementById("next-btn").style.display = "block";
+        document.getElementById("submit-btn").style.display = "none";
+    }
+
+    function selectAnswer(button, selectedOption) {
+        document.querySelectorAll("#options button").forEach(btn => btn.classList.remove("selected"));
+        button.classList.add("selected");
+        selectedAnswers[currentQuestionIndex] = selectedOption;
+        if (selectedOption === questions[currentQuestionIndex].answer) {
+            score +=5;
+            updateScore();
+        }
+    }
+
+    document.getElementById("clue-btn").addEventListener("click", () => {
+        if (clueTries > 0) {
+            document.getElementById("clue-text").innerText = questions[currentQuestionIndex].clue;
+            document.getElementById("clue-text").style.display = "block";
+            clueTries--;
+            document.getElementById("clue-btn").innerText = `Show Clue (${clueTries} free tries left)`;
+        } else {
+            document.getElementById("clue-btn").innerText = "No free tries left";
+            document.getElementById("clue-btn").disabled = true;
+        }
+    });
+
+    document.getElementById("next-btn").addEventListener("click", () => {
+        currentQuestionIndex++;
+        if (currentQuestionIndex < questions.length) {
+            loadQuestion();
+        } else {
+            document.getElementById("next-btn").style.display = "none";
+            document.getElementById("submit-btn").style.display = "block";
+        }
+    });
+    document.getElementById("previous-btn").addEventListener("click", () => {
+        currentQuestionIndex--;
+        if (currentQuestionIndex >= 0) {
+            loadQuestion();
+        }
+    });
+
+    document.getElementById("submit-btn").addEventListener("click", () => {
+        if (confirm("Are you sure you want to submit the quiz?")) {
+            document.getElementById("quiz-container").style.display = "none";
+            document.getElementById("final-results").style.display = "block";
+            document.getElementById("total-score").innerText = score;
+            let wrongAnswers = "";
+            for (let i = 0; i < questions.length; i++) {
+                if (selectedAnswers[i] !== questions[i].answer) {
+                    wrongAnswers += `<p>Question ${i+1}: ${questions[i].question}</p>`;
+                    wrongAnswers += `<p>Your answer: ${selectedAnswers[i]}</p>`;
+                    wrongAnswers += `<p>Correct answer: ${questions[i].answer}</p>`;
+                }
+            }
+            document.getElementById("wrong-answers").innerHTML = wrongAnswers;
+        }
+    });
+
+    function updateTimer() {
+        let minutes = Math.floor(timeLeft / 60);
+        let seconds = timeLeft % 60;
+        document.getElementById("timer").innerText = `Time: ${minutes}:${seconds.toString().padStart(2, '0')}`;
+        timeLeft--;
+        if (timeLeft < 0) {
+            clearInterval(timerInterval);
+            document.getElementById("submit-btn").click();
+        }
+    }
+
+    timerInterval = setInterval(updateTimer, 1000);
+    loadQuestion();
+</script>
+</body>
+</html>
