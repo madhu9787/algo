@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Algo Arena</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Creepster&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="jungle-background"></div>
+    <div class="game-container">
+        <h1 id="game-title">Algo Arena</h1>
+        <div id="loading-text">Loading<span id="dots"></span> <span id="percentage">0%</span></div>
+        <div class="loading-bar">
+            <div class="progress"></div>
+        </div>
+        <div id="login-box" class="hidden">
+            <div class="login-container">
+                <input type="text" placeholder="Enter your name" required>
+                <button id="login-btn">Login</button>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: #2a4d14;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            font-family: Arial, sans-serif;
+        }
+        .jungle-background {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: url('jungle.jpg') center/cover no-repeat;
+            animation: jungleMove 8s infinite linear alternate;
+        }
+        @keyframes jungleMove {
+            0% { transform: scale(1); }
+            100% { transform: scale(1.1); }
+        }
+        .game-container {
+            text-align: center;
+            z-index: 2;
+        }
+        #game-title {
+            font-size: 100px;
+            color: rgba(28, 112, 3, 0.877);
+            text-shadow: 4px 4px 10px black;
+            font-family: 'Creepster', serif;
+            transform: translateY(-70px);
+            transition: transform 1s ease-in-out;
+        }
+        #loading-text {
+            font-size: 24px;
+            color: white;
+            margin-top: 20px;
+        }
+        .loading-bar {
+            width: 200px;
+            height: 10px;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 5px;
+            margin: 20px auto;
+            position: relative;
+            overflow: hidden;
+        }
+        .progress {
+            width: 0%;
+            height: 100%;
+            background: limegreen;
+        }
+        #login-box {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: absolute;
+            width: 250px;
+            padding: 15px;
+            top: 55%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            transition: transform 0.5s ease-in-out;
+        }
+        .login-container {
+            background: transparent;
+            padding: 15px;
+            text-align: center;
+            width: 100%;
+        }
+        .login-container input {
+            width: 90%;
+            height: 50px;
+            font-size: 20px;
+            padding: 8px;
+            margin-top: 10px;
+            border: none;
+            border-radius: 5px;
+            color: black;
+        }
+        .login-container input::placeholder {
+            color: gray;
+        }
+        .login-container button {
+            width: 85%;
+            height: 45px;
+            padding: 8px;
+            margin-top: 15px;
+            background: limegreen;
+            color: white;
+            font-size: 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .hidden { display: none; }
+    </style>
+
+    <script type="module">
+        
+        // Import Firebase modules
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
+        import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-database.js";
+
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyCyZkJJnt4jhQs_OO-GT5lxXixCvOJSY_Q",
+            authDomain: "algoarena-85844.firebaseapp.com",
+            databaseURL: "https://algoarena-85844-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "algoarena-85844",
+            storageBucket: "algoarena-85844.firebasestorage.app",
+            messagingSenderId: "346189897124",
+            appId: "1:346189897124:web:2cdf7056e42d63401bf531"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);
+
+        document.addEventListener("DOMContentLoaded", function() {
+            let progressBar = document.querySelector(".progress");
+            let percentageText = document.getElementById("percentage");
+            let loadingText = document.getElementById("loading-text");
+            let loadingBar = document.querySelector(".loading-bar");
+            let title = document.getElementById("game-title");
+            let loginBox = document.getElementById("login-box");
+            let dots = document.getElementById("dots");
+
+            let progress = 0;
+            let dotCount = 0;
+
+            let dotInterval = setInterval(() => {
+                dots.textContent = ".".repeat(dotCount % 4);
+                dotCount++;
+            }, 500);
+
+            let interval = setInterval(() => {
+                progress += 10;
+                progressBar.style.width = progress + "%";
+                percentageText.innerText = progress + "%";
+
+                if (progress >= 100) {
+                    clearInterval(interval);
+                    clearInterval(dotInterval);
+                    setTimeout(() => {
+                        loadingText.style.display = "none";
+                        loadingBar.style.display = "none";
+                        title.style.transform = "translateY(-200px)";
+                        loginBox.style.display = "flex";
+                        setTimeout(() => {
+                            loginBox.style.transform = "translate(-50%, -50%) scale(1)";
+                        }, 300);
+                    }, 500);
+                }
+            }, 300);
+        });
+
+        document.getElementById("login-btn").addEventListener("click", function() {
+            let username = document.querySelector(".login-container input").value;
+            if (username.trim() !== "") {
+                // Store username in Firebase
+                set(ref(database, 'users/' + username), {
+                    name: username
+                }).then(() => {
+                    localStorage.setItem("username", username);
+                    window.location.href = "level.html"; // Redirect to next page
+                }).catch((error) => {
+                    console.error("Error writing to database: ", error);
+                });
+            } else {    
+                alert("Please enter your name.");
+            }
+        });
+    </script>
+</body>
+</html>
