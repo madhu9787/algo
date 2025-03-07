@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Select Level - Algo Arena</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Creepster&display=swap" rel="stylesheet">
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: #2a4d14;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            font-family: Arial, sans-serif;
+            text-align: center;
+        }
+        
+        .jungle-background {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: url('pr.jpeg') center/cover no-repeat;
+            animation: jungleMove 8s infinite linear alternate;
+        }
+
+        .level-container {
+            position: absolute;
+            top: 80%; /* Adjust this percentage to move the boxes down */
+            left: 50%;
+            transform: translate(-50%, -50%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 52px;
+        }
+
+        .level-box {
+            transition: transform 0.1s ease, box-shadow 0.1s ease;
+            width: 300px; /* Reduce width */
+            height: 50px; /* Reduce height */
+            border-radius: 10px; /* Adjust for better proportion */
+            font-size: 40px; /* Reduce font size to fit */
+            color: beige;
+            font-weight: bold;
+            font-family: 'Creepster', cursive;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+        }
+
+        .level-box:hover {
+            transform: scale(1); /* No zoom effect */
+            box-shadow: 0 0 5px rgba(255, 255, 255, 0.3); /* Reduce glow effect */
+        }
+
+        .easy {
+            background: url('easy.png') center/cover no-repeat;
+        }
+
+        .medium {
+            background: url('medium.png') center/cover no-repeat;
+        }
+
+        .hard {
+            background: url('hard.png') center/cover no-repeat;
+        }
+
+        #welcome-text {
+            font-size: 80px;
+            color: rgba(10, 47, 0, 0.83);
+            text-shadow: 4px 4px 10px rgb(238, 227, 227);
+            position: absolute;
+            top: 20px;
+            width: 100%;
+            font-family: 'Creepster', serif;
+        }
+    </style>
+</head>
+<body>
+    <div class="jungle-background"></div>
+    <div id="welcome-text"></div>
+    <div class="level-container">
+        <div class="level-box easy" onclick="startGame('easy')">LEVEL-1</div>
+        <div class="level-box medium" onclick="startGame('medium')">LEVEL-2</div>
+        <div class="level-box hard" onclick="startGame('hard')">LEVEL-3</div>
+    </div>
+
+    <script>
+        // Get username from storage and display it
+        let username = localStorage.getItem("username") || "Player";
+        document.getElementById("welcome-text").innerText = "Welcome\n" 
+        + username + "! Choose your level.";
+
+        function startGame(level) {
+            window.location.href = "level" + level + ".html"; // Redirect to respective quiz page
+        }
+    </script>
+</body>
+</html>
